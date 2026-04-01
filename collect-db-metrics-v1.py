@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+metric_slow_queries.py — Queries lentas no PostgreSQL via pg_stat_statements
+Compativel com Python 2.7
+
+Uso: python metric_slow_queries.py
+"""
+
 import psycopg2
 import ConfigParser
 import os
@@ -24,15 +33,15 @@ LIMIT        = cfg.getint("slow_queries", "limit")
 
 SQL = """
     SELECT
-        queryid::text                        AS query_id,
-        calls                                AS chamadas,
-        round(total_time::numeric, 2)        AS total_ms,
-        round((total_time / calls)::numeric, 2) AS media_ms,
-        rows                                 AS linhas_retornadas,
-        LEFT(query, 120)                     AS query_texto
+        queryid::text                          AS query_id,
+        calls                                  AS chamadas,
+        round(total_exec_time::numeric, 2)     AS total_ms,
+        round(mean_exec_time::numeric, 2)      AS media_ms,
+        rows                                   AS linhas_retornadas,
+        LEFT(query, 120)                       AS query_texto
     FROM pg_stat_statements
     WHERE calls > 0
-      AND (total_time / calls) >= %s
+      AND mean_exec_time >= %s
     ORDER BY media_ms DESC
     LIMIT %s;
 """
