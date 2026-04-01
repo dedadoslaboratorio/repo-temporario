@@ -1,0 +1,14 @@
+[Unit]
+Description=PostgreSQL Metrics Collector — New Relic
+After=network.target
+
+[Service]
+Type=oneshot
+User=renan.kazap
+WorkingDirectory=/home/renan.kazap/repo-temporario
+ExecStart=/usr/bin/python /home/renan.kazap/repo-temporario/pg_metrics.py
+StandardOutput=append:/home/renan.kazap/pg_metrics.log
+StandardError=append:/home/renan.kazap/pg_metrics.log
+
+[Install]
+WantedBy=multi-user.target
