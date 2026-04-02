@@ -524,78 +524,6 @@ def collect_replication(cur, now_ms):
 
     return metrics
 
-
-# ═════════════════════════════════════════════
-# ENVIO
-# ═════════════════════════════════════════════
-
-def build_payload(metrics):
-    return [{"common": {"attributes": {"app.name": NR_APP, "host": HOSTNAME}}, "metrics": metrics}]
-
-def send_to_newrelic(payload):
-    data    = json.dumps(payload).encode("utf-8")
-    headers = {"Content-Type": "application/json", "Api-Key": NR_LICENSE}
-    return http_post(NR_ENDPOINT, headers, data)
-
-
-# ═════════════════════════════════════════════
-# MAIN
-# ═════════════════════════════════════════════
-
-try:
-    print("=" * 55)
-    print("pg_metrics — %s" % time.strftime("%Y-%m-%d %H:%M:%S"))
-    print("Banco: %s | Host: %s" % (DBNAME, HOSTNAME))
-    print("=" * 55)
-
-    conn = psycopg2.connect(
-        host=HOST, port=PORT, dbname=DBNAME,
-        user=USER, password=PASSWORD,
-        connect_timeout=5,
-        application_name="pg_monitor",
-    )
-    conn.set_session(readonly=True, autocommit=True)
-    cur = conn.cursor()
-
-    now_ms      = int(time.time() * 1000)
-    all_metrics = []
-
-    all_metrics += collect_connections(cur, now_ms)
-    all_metrics += collect_query_performance(cur, now_ms)
-    all_metrics += collect_cache_io(cur, now_ms)
-    all_metrics += collect_transactions(cur, now_ms)
-    all_metrics += collect_tuples(cur, now_ms)
-    all_metrics += collect_locks(cur, now_ms)
-    all_metrics += collect_sizes(cur, now_ms)
-    all_metrics += collect_vacuum(cur, now_ms)
-    all_metrics += collect_bgwriter(cur, now_ms)
-    all_metrics += collect_replication(cur, now_ms)
-    all_metrics += collect_settings(cur, now_ms)
-
-    cur.close()
-    conn.close()
-
-    print("-" * 55)
-    print("Total de metricas coletadas: %d" % len(all_metrics))
-    print("Enviando para New Relic...")
-
-    status = send_to_newrelic(build_payload(all_metrics))
-
-    if status == 202:
-        print("New Relic: OK (202)")
-    else:
-        print("New Relic: erro HTTP %s" % status)
-
-    print("=" * 55)
-
-except psycopg2.OperationalError as e:
-    print("[ERRO] Falha na conexao: %s" % str(e))
-except psycopg2.ProgrammingError as e:
-    print("[ERRO] Erro na query: %s" % str(e))
-except Exception as e:
-    print("[ERRO] Inesperado: %s" % str(e))
-
-
 # ═════════════════════════════════════════════
 # 11. CONFIGURACOES DO BANCO
 # ═════════════════════════════════════════════
@@ -676,3 +604,76 @@ def collect_settings(cur, now_ms):
 
     print("  %d configuracoes coletadas." % len(metrics))
     return metrics
+
+# ═════════════════════════════════════════════
+# ENVIO
+# ═════════════════════════════════════════════
+
+def build_payload(metrics):
+    return [{"common": {"attributes": {"app.name": NR_APP, "host": HOSTNAME}}, "metrics": metrics}]
+
+def send_to_newrelic(payload):
+    data    = json.dumps(payload).encode("utf-8")
+    headers = {"Content-Type": "application/json", "Api-Key": NR_LICENSE}
+    return http_post(NR_ENDPOINT, headers, data)
+
+
+# ═════════════════════════════════════════════
+# MAIN
+# ═════════════════════════════════════════════
+
+try:
+    print("=" * 55)
+    print("pg_metrics — %s" % time.strftime("%Y-%m-%d %H:%M:%S"))
+    print("Banco: %s | Host: %s" % (DBNAME, HOSTNAME))
+    print("=" * 55)
+
+    conn = psycopg2.connect(
+        host=HOST, port=PORT, dbname=DBNAME,
+        user=USER, password=PASSWORD,
+        connect_timeout=5,
+        application_name="pg_monitor",
+    )
+    conn.set_session(readonly=True, autocommit=True)
+    cur = conn.cursor()
+
+    now_ms      = int(time.time() * 1000)
+    all_metrics = []
+
+    all_metrics += collect_connections(cur, now_ms)
+    all_metrics += collect_query_performance(cur, now_ms)
+    all_metrics += collect_cache_io(cur, now_ms)
+    all_metrics += collect_transactions(cur, now_ms)
+    all_metrics += collect_tuples(cur, now_ms)
+    all_metrics += collect_locks(cur, now_ms)
+    all_metrics += collect_sizes(cur, now_ms)
+    all_metrics += collect_vacuum(cur, now_ms)
+    all_metrics += collect_bgwriter(cur, now_ms)
+    all_metrics += collect_replication(cur, now_ms)
+    all_metrics += collect_settings(cur, now_ms)
+
+    cur.close()
+    conn.close()
+
+    print("-" * 55)
+    print("Total de metricas coletadas: %d" % len(all_metrics))
+    print("Enviando para New Relic...")
+
+    status = send_to_newrelic(build_payload(all_metrics))
+
+    if status == 202:
+        print("New Relic: OK (202)")
+    else:
+        print("New Relic: erro HTTP %s" % status)
+
+    print("=" * 55)
+
+except psycopg2.OperationalError as e:
+    print("[ERRO] Falha na conexao: %s" % str(e))
+except psycopg2.ProgrammingError as e:
+    print("[ERRO] Erro na query: %s" % str(e))
+except Exception as e:
+    print("[ERRO] Inesperado: %s" % str(e))
+
+
+
